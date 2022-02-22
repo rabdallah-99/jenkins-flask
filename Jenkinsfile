@@ -14,15 +14,15 @@ pipeline {
         }
         stage('Test') {
             steps {
-               sh ' python3 tests/test_app.py
+               sh ' python3 tests/test_app.py '
             }
         }
         stage('Database creation') {
             steps {
                 if (fileExists('data.db')) {
-                sh "    echo 'Database Exists'"
+                sh '    echo Database Exists'
                 } else {
-                sh "python3 create.py"
+                sh 'python3 create.py'
                 }
 
             }
