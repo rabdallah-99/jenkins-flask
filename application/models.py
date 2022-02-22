@@ -1,5 +1,7 @@
 from application import db
 
-class Games(db.Model):
+class Tasks(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    name = db.Column(db.String(30))
+    name = db.Column(db.String(30), nullable=False)
+    description = db.Column(db.String(100), nullable=False)
+    completed = db.Column(db.Boolean, default=False)

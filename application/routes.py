@@ -1,35 +1,64 @@
 from application import app, db
-from application.models import Games
+from application.models import Tasks
+from application.forms import CreateForm, UpdateForm
+from flask import render_template, redirect, url_for, request
 
-@app.route('/add')
-def add():
-    new_game = Games(name="New Game")
-    db.session.add(new_game)
-    db.session.commit()
-    return "Added new game to database"
+@app.route('/create', methods=['GET', 'POST'])
+def create():
+    createform = CreateForm()
 
-@app.route('/read')
+    if createform.validate_on_submit():
+        task = Tasks(name=createform.name.data, description=createform.description.data)
+        db.session.add(task)
+        db.session.commit()
+        # Instead of rendering a template, the next line redirects the user to the endpoint for the function called 'read'.
+        return redirect(url_for('read'))
+    return render_template('create.html', form=createform)
+
+@app.route('/', methods=['GET'])
+@app.route('/read', methods=['GET'])
 def read():
-    all_games = Games.query.all()
-    games_string = ""
-    for game in all_games:
-        games_string += "<br>"+ game.name
-    return games_string
+    tasks = Tasks.query.all()
+    return render_template('read.html', tasks=tasks)
 
-@app.route('/update/<name>')
+@app.route('/update/<name>', methods=['GET', 'POST'])
 def update(name):
-    first_game = Games.query.first()
-    first_game.name = name
-    db.session.commit()
-    return first_game.name
+    updateform = UpdateForm()
+    task = Tasks.query.filter_by(name=name).first()
+    
+    # Prepopulate the form boxes with current values when they open the page.
+    if request.method == 'GET':
+        updateform.name.data = task.name
+        updateform.description.data = task.description
+        return render_template('update.html', form=updateform)
+    
+    # Update the item in the databse when they submit
+    else:
+        if updateform.validate_on_submit():
+            task.name = updateform.name.data
+            task.description = updateform.description.data
+            task.completed = updateform.completed.data
+            db.session.commit()
+            return redirect(url_for('read'))
+    
 
-@app.route('/count')
-def count():
-	number_of_games = Games.query.count()
-	return str(number_of_games)
-@app.route('/delete')
-def delete():
-	game_to_delete = Games.query.first()
-	db.session.delete(game_to_delete)
-	db.session.commit()	
-	return "Game deleted"
+@app.route('/delete/<name>', methods=['GET', 'POST'])
+def delete(name):
+    task = Tasks.query.filter_by(name=name).first()
+    db.session.delete(task)
+    db.session.commit()
+    return redirect(url_for('read'))
+
+@app.route('/complete/<name>', methods=['GET'])
+def complete(name):
+    task = Tasks.query.filter_by(name=name).first()
+    task.completed = True
+    db.session.commit()
+    return redirect(url_for('read'))
+
+@app.route('/incomplete/<name>', methods=['GET'])
+def incomplete(name):
+    task = Tasks.query.filter_by(name=name).first()
+    task.completed = False
+    db.session.commit()
+    return redirect(url_for('read'))
