@@ -8,10 +8,7 @@ pipeline {
                 if (!fileExists('jenkins-flask') {
                   sh '  git clone https://github.com/rabdallah-99/jenkins-flask'
                     }
-                cd jenkins-flask
-                python3 -m venv
-                . ./venv/bin/activate
-                pip3 install -r requirements.txt
+                sh ' . ./setup.sh'
 
             } //steps close
         }
