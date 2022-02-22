@@ -3,8 +3,8 @@ pipeline {
     stages {
         stage('setup') {
             steps {
-                sudo apt update
-                sudo apt install python3 python3-venv python3-pip -y
+                 sh ' sudo apt update' 
+               sh ' sudo apt install python3 python3-venv python3-pip -y'
                 if (!fileExists('jenkins-flask')) {
                   sh '  git clone https://github.com/rabdallah-99/jenkins-flask'
                     }
