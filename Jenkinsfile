@@ -5,7 +5,7 @@ pipeline {
             steps {
                 sudo apt update
                 sudo apt install python3 python3-venv python3-pip -y
-                if !(fileExists('jenkins-flask') {
+                if (!fileExists('jenkins-flask') {
                     git clone https://github.com/rabdallah-99/jenkins-flask
                     }
                 cd jenkins-flask
