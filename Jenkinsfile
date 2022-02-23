@@ -1,31 +1,34 @@
 pipeline {
     agent any
+    environment {
+        CREATE_SCHEMA = "true"
+        DATABASE_URI = credentials("DATABASE_URI")
+        SECRET_KEY = credentials("SECRET_KEY")
+    }
     stages {
         stage('setup') {
             steps {
-                 
-                sh ' . ./setup.sh'
-
+                sh ' bash ./setup.sh'
             } //steps close
-        }
+       }
         stage('Test') {
             steps {
-               sh ' python3 tests/test_app.py '
+               sh ' bash test.sh  '
             }
         }
         stage('Database creation') {
             steps {
-                if (fileExists('data.db')) {
-                sh '    echo Database Exists'
-                } else {
-                sh 'python3 create.py'
+                script{
+                    if (env.CREATE_SCHEMA == "true") {
+                        sh ' bash database.sh'
+                    }
                 }
 
             }
         }
         stage('Run') {
             steps {
-                sh ' python3 app.py &'
+                sh ' bash run.sh'
             }
         }  // Run
     } //stages

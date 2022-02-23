@@ -1,12 +1,13 @@
-#! /bin/bash
-sudo apt update
-sudo apt install python3 python3-venv python3-pip -y
-if (-d jenkins-flask ) 
-  then 
-         git clone https://github.com/rabdallah-99/jenkins-flask
-fi
-cd jenkins-flask
-python3 -m venv
-. ./venv/bin/activate
-pip3 install -r requirements.txt
+#!/bin/bash
 
+# installing needed packages
+sudo apt update
+sudo apt install python3-venv python3-pip python3 -y
+
+# create virtual environment and activating it
+python3 -m venv venv
+source venv/bin/activate
+
+# install pip requirements
+
+pip3 install -r requirements.txt
