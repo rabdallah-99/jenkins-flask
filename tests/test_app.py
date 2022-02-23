@@ -1,14 +1,14 @@
-from flask import url_for
 from flask_testing import TestCase
 from application import app, db
 from application.models import Tasks
+from flask import url_for
 
 class TestBase(TestCase):
 
     def create_app(self):
         # Defines the flask object's configuration for the unit tests
         app.config.update(
-            SQLALCHEMY_DATABASE_URI='sqlite:///',
+            DATABASE_URI='sqlite:///',
             DEBUG=True,
             WTF_CSRF_ENABLED=False
         )
@@ -17,76 +17,47 @@ class TestBase(TestCase):
     def setUp(self):
         # Will be called before every test
         db.create_all()
-        db.session.add(Tasks(description="Run unit tests"))
+
+        task1 = Tasks(name="new task", description= "this new task")
+
+        db.session.add(task1)
         db.session.commit()
 
     def tearDown(self):
         # Will be called after every test
-        db.session.remove()
         db.drop_all()
 
-class TestViews(TestBase):
-    # Test whether we get a successful response from our routes
-    def test_home_get(self):
-        response = self.client.get(url_for('home'))
-        self.assert200(response)
-    
-    def test_create_task_get(self):
-        response = self.client.get(url_for('create_task'))
-        self.assert200(response)
+class TestCRUD(TestBase):
 
-    def test_read_tasks_get(self):
-        response = self.client.get(url_for('read_tasks'))
-        self.assert200(response)
+    def test_read_tasks(self):
+        response = self.client.get(url_for('read'))
+        self.assertEqual(response.status_code, 200)
+        self.assertIn('new task', str(response.data))
+        self.assertIn('this new task', str(response.data))
 
-    def test_update_task_get(self):
-        response = self.client.get(url_for('update_task', id=1))
-        self.assert200(response)
-
-class TestRead(TestBase):
-
-    def test_read_home_tasks(self):
-        response = self.client.get(url_for('home'))
-        self.assertIn(b"Run unit tests", response.data)
-    
-    def test_read_tasks_dictionary(self):
-        response = self.client.get(url_for('read_tasks'))
-        self.assertIn(b"Run unit tests", response.data)
-
-class TestCreate(TestBase):
-
-    def test_create_task(self):
+    def test_create_tasks(self):
         response = self.client.post(
-            url_for('create_task'),
-            data={"description": "Testing create functionality"},
+            url_for('create'),
+            data=dict(name="created task", description="this is a create task"),
             follow_redirects=True
         )
-        self.assertIn(b"Testing create functionality", response.data)
-    
-class TestUpdate(TestBase):
+        created_task = Tasks.query.get(2)
+        self.assertEqual(created_task.name, "created task")
+        self.assertIn('created task', str(response.data))
+        self.assertIn('this is a create task', str(response.data))
 
-    def test_update_task(self):
+    def test_update_tasks(self):
         response = self.client.post(
-            url_for('update_task', id=1),
-            data={"description": "Testing update functionality"},
+            url_for('update', name="new task"),
+            data=dict(name="updated task", description="this is an updated task", completed=True),
             follow_redirects=True
         )
-        self.assertIn(b"Testing update functionality", response.data)
-    
-    def test_complete_task(self):
-        response = self.client.get(url_for('complete_task', id=1), follow_redirects=True)
-        self.assertEqual(Tasks.query.get(1).completed, True)
-    
-    def test_incomplete_task(self):
-        response = self.client.get(url_for('incomplete_task', id=1), follow_redirects=True)
-        self.assertEqual(Tasks.query.get(1).completed, False)
-        
+        self.assertIn("updated task", str(response.data))
+        self.assertIn("this is an updated task", str(response.data))
 
-class TestDelete(TestBase):
-
-    def test_delete_task(self):
-        response = self.client.get(
-            url_for('delete_task', id=1),
+    def test_delete_tasks(self):
+        response = self.client.post(
+            url_for('delete', name="new task"),
             follow_redirects=True
         )
-        self.assertNotIn(b"Run unit tests", response.data)
+        self.assertNotIn("new task", str(response.data))
